@@ -1,4 +1,4 @@
-package com.fiap.tech.challenge.online.course.feedback.receiver.serverless;
+package fiap.tech.challenge.online.course.feedback.receiver.serverless;
 
 import org.junit.jupiter.api.Test;
 

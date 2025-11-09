@@ -13,9 +13,11 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <jackson.version>2.15.2</jackson.version>
+        <dotenv-java.version>3.2.0</dotenv-java.version>
         <aws-lambda-java-core.version>1.2.3</aws-lambda-java-core.version>
         <aws-lambda-java-events.version>3.11.3</aws-lambda-java-events.version>
         <junit.version>5.10.0</junit.version>
+        <postgresql.version>42.7.7</postgresql.version>
         <mockito.version>5.7.0</mockito.version>
     </properties>
 
@@ -60,6 +62,22 @@
             <version>${jackson.version}</version>
         </dependency>
         <!-- JACKSON -->
+
+        <!-- ENVIRONMENT VARIABLES -->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>${dotenv-java.version}</version>
+        </dependency>
+        <!-- ENVIRONMENT VARIABLES -->
+
+        <!-- POSTGRESQL -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+        <!-- POSTGRESQL -->
 
         <!-- UNIT TESTS -->
         <dependency>

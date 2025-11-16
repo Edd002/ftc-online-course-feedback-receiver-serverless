@@ -65,6 +65,9 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
             if (rowsAffected < 1) {
                 throw new SQLException("Ocorreu um problema ao cadastrar o feedback. Tente novamente mais tarde.");
             }
+            if (feedbackRequest.feedbackUrgent()) {
+                // CALL ftc-online-course-report-serverless TO SEND E-MAIL TO ADMINISTRATOR
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

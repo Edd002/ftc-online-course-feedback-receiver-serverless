@@ -45,7 +45,7 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
 
     public Long getTeacherStudentIdByTeacherIdAndStudentEmail(Long teacherId, FeedbackRequest feedbackRequest) {
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement("SELECT tt.id FROM t_teacher_student tt WHERE tt.fk_teacher = ? AND tt.fk_student = (SELECT id FROM t_student ts WHERE ts.email = ?);");
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT tts.id FROM t_teacher_student tts WHERE tts.fk_teacher = ? AND tts.fk_student = (SELECT ts.id FROM t_student ts WHERE ts.email = ?);");
             preparedStatement.setLong(1, teacherId);
             preparedStatement.setString(2, feedbackRequest.studentEmail());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -73,12 +73,12 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
     private PreparedStatement preparedStatement(Connection connection, Long teacherStudentId, FeedbackRequest feedbackRequest) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement(
                 "WITH new_assessment AS (" +
-                        "    INSERT INTO t_assessment(created_by, name, type, score, fk_teacher_student) " +
-                        "    VALUES (?, ?, ?, ?, ?) " +
+                        "    INSERT INTO t_assessment(id, created_by, name, type, score, fk_teacher_student) " +
+                        "    VALUES (nextval('sq_assessment'), ?, ?, ?, ?, ?) " +
                         "    RETURNING id AS assessment_id " +
                         ")" +
-                        "INSERT INTO t_feedback(created_by, urgent, description, comment, fk_assessment) " +
-                        "SELECT ?, ?, ?, ?, assessment_id " +
+                        "INSERT INTO t_feedback(id, created_by, urgent, description, comment, fk_assessment) " +
+                        "SELECT nextval('sq_feedback'), ?, ?, ?, ?, assessment_id " +
                         "FROM new_assessment;");
         return setPreparedStatementParameters(teacherStudentId, feedbackRequest, preparedStatement);
     }

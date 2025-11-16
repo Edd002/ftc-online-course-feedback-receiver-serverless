@@ -8,7 +8,6 @@ import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.dao.FTCOnlineCourseFeedbackReceiverServerlessDAO;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.FeedbackRequest;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.HttpObjectMapper;
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.UserTypeRequest;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.error.ErrorResponse;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.error.InvalidParameterErrorResponse;
 
@@ -42,10 +41,11 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
 
     private FeedbackRequest validateAPIGatewayProxyRequestEvent(APIGatewayProxyRequestEvent request) {
         try {
-            if (request.getQueryStringParameters() == null || request.getQueryStringParameters().get("userType") == null || request.getQueryStringParameters().get("email") == null || request.getQueryStringParameters().get("accessKey") == null) {
+            FeedbackRequest feedbackRequest = HttpObjectMapper.readValue(request.getBody(), FeedbackRequest.class);
+            if (feedbackRequest == null || feedbackRequest.userType() == null || feedbackRequest.email() == null || feedbackRequest.accessKey() == null) {
                 throw new InvalidParameterException("O tipo de usuário juntamente com seu o e-mail e chave de acesso são obrigatórios para realizar a cadastro de feedback.");
             }
-            return HttpObjectMapper.readValue(request.getBody(), FeedbackRequest.class);
+            return feedbackRequest;
         } catch (Exception e) {
             throw new InvalidParameterException(e.getMessage());
         }
@@ -56,6 +56,7 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
     }
 
     private APIGatewayProxyResponseEvent buildErrorResponse(APIGatewayProxyRequestEvent request, Exception e) {
-        return new APIGatewayProxyResponseEvent().withStatusCode(500).withBody(HttpObjectMapper.writeValueAsString(new ErrorResponse(UserTypeRequest.valueOf(request.getQueryStringParameters().get("userType")), request.getQueryStringParameters().get("email"), e.getMessage()))).withIsBase64Encoded(false);
+        FeedbackRequest feedbackRequest = HttpObjectMapper.readValue(request.getBody(), FeedbackRequest.class);
+        return new APIGatewayProxyResponseEvent().withStatusCode(500).withBody(HttpObjectMapper.writeValueAsString(new ErrorResponse(feedbackRequest.userType(), feedbackRequest.email(), e.getMessage()))).withIsBase64Encoded(false);
     }
 }

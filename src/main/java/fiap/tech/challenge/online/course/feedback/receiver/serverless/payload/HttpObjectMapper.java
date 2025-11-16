@@ -12,7 +12,7 @@ public class HttpObjectMapper {
         try {
             return payloadObjectMapper.writeValueAsString(value);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
@@ -20,15 +20,23 @@ public class HttpObjectMapper {
         try {
             return payloadObjectMapper.readValue(content, valueType);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
-        return payloadObjectMapper.convertValue(fromValue, toValueType);
+        try {
+            return payloadObjectMapper.convertValue(fromValue, toValueType);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static <T> T convertValue(Object fromValue, TypeReference<T> toValueType) {
-        return payloadObjectMapper.convertValue(fromValue, toValueType);
+        try {
+            return payloadObjectMapper.convertValue(fromValue, toValueType);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

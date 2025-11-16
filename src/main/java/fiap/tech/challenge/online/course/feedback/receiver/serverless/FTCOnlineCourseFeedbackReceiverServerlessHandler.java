@@ -23,9 +23,14 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
+        FeedbackRequest feedbackRequest = HttpObjectMapper.readValue(request.getBody(), FeedbackRequest.class);
+        if (feedbackRequest == null) {
+            context.getLogger().log("Erro de conversão de payload de requisição.", LogLevel.ERROR);
+            return buildInvalidParameterErrorResponse(new RuntimeException("O payload para cadastro de feedback não foi informado corretamente."));
+        }
         try {
-            FeedbackRequest feedbackRequest = validateAPIGatewayProxyRequestEvent(request);
-            context.getLogger().log("Requisição recebida em FTC Online Course Feedback Receiver - UserType: " + feedbackRequest.userType()  + " - E-mail: " + feedbackRequest.email(), LogLevel.INFO);
+            context.getLogger().log("Requisição recebida em FTC Online Course Feedback Receiver - UserType: " + feedbackRequest.userType() + " - E-mail: " + feedbackRequest.email(), LogLevel.INFO);
+            validateAPIGatewayProxyRequestEvent(feedbackRequest);
             Long teacherId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getTeacherIdByEmailAndAccessKey(feedbackRequest);
             Long teacherStudentId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getTeacherStudentIdByTeacherIdAndStudentEmail(teacherId, feedbackRequest);
             ftcOnlineCourseFeedbackReceiverServerlessDAO.registerFeedback(teacherStudentId, feedbackRequest);
@@ -35,17 +40,15 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
             return buildInvalidParameterErrorResponse(e);
         } catch (Exception e) {
             context.getLogger().log(e.getMessage(), LogLevel.ERROR);
-            return buildErrorResponse(request, e);
+            return buildErrorResponse(feedbackRequest, e);
         }
     }
 
-    private FeedbackRequest validateAPIGatewayProxyRequestEvent(APIGatewayProxyRequestEvent request) {
+    private void validateAPIGatewayProxyRequestEvent(FeedbackRequest feedbackRequest) {
         try {
-            FeedbackRequest feedbackRequest = HttpObjectMapper.readValue(request.getBody(), FeedbackRequest.class);
             if (feedbackRequest == null || feedbackRequest.userType() == null || feedbackRequest.email() == null || feedbackRequest.accessKey() == null) {
                 throw new InvalidParameterException("O tipo de usuário juntamente com seu o e-mail e chave de acesso são obrigatórios para realizar a cadastro de feedback.");
             }
-            return feedbackRequest;
         } catch (Exception e) {
             throw new InvalidParameterException(e.getMessage());
         }
@@ -55,8 +58,7 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
         return new APIGatewayProxyResponseEvent().withStatusCode(400).withBody(HttpObjectMapper.writeValueAsString(new InvalidParameterErrorResponse(e.getMessage()))).withIsBase64Encoded(false);
     }
 
-    private APIGatewayProxyResponseEvent buildErrorResponse(APIGatewayProxyRequestEvent request, Exception e) {
-        FeedbackRequest feedbackRequest = HttpObjectMapper.readValue(request.getBody(), FeedbackRequest.class);
+    private APIGatewayProxyResponseEvent buildErrorResponse(FeedbackRequest feedbackRequest, Exception e) {
         return new APIGatewayProxyResponseEvent().withStatusCode(500).withBody(HttpObjectMapper.writeValueAsString(new ErrorResponse(feedbackRequest.userType(), feedbackRequest.email(), e.getMessage()))).withIsBase64Encoded(false);
     }
 }

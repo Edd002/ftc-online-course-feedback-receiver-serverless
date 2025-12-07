@@ -1,6 +1,7 @@
 package fiap.tech.challenge.online.course.feedback.receiver.serverless.loader;
 
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.config.KMSConfig;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.util.EnvUtil;
 
 import java.io.IOException;
 import java.io.InputStream;

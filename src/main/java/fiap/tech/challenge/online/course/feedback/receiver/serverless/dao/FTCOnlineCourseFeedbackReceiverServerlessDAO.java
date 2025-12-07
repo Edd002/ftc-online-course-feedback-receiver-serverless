@@ -2,18 +2,19 @@ package fiap.tech.challenge.online.course.feedback.receiver.serverless.dao;
 
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.config.CryptoConfig;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.config.DataSourceConfig;
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.FeedbackRequest;
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.UserTypeRequest;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.record.FeedbackRequest;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.enumeration.UserType;
 
 import java.sql.*;
 import java.util.NoSuchElementException;
+import java.util.Properties;
 
 public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
 
     private final Connection connection;
 
-    public FTCOnlineCourseFeedbackReceiverServerlessDAO() {
-        DataSourceConfig dataSourceConfig = new DataSourceConfig();
+    public FTCOnlineCourseFeedbackReceiverServerlessDAO(Properties applicationProperties) {
+        DataSourceConfig dataSourceConfig = new DataSourceConfig(applicationProperties);
         try {
             Class.forName("org.postgresql.Driver");
             connection = DriverManager.getConnection(dataSourceConfig.getJdbcUrl(), dataSourceConfig.getUsername(), dataSourceConfig.getPassword());
@@ -27,7 +28,7 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
 
     public Long getTeacherIdByEmailAndAccessKey(FeedbackRequest feedbackRequest) {
         try {
-            if (!feedbackRequest.userType().equals(UserTypeRequest.TEACHER)) {
+            if (!feedbackRequest.userType().equals(UserType.TEACHER)) {
                 throw new IllegalStateException("Somente usuários do tipo professor podem cadastrar feedback de alunos.");
             }
             PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM t_teacher WHERE email = ? AND access_key = ?");

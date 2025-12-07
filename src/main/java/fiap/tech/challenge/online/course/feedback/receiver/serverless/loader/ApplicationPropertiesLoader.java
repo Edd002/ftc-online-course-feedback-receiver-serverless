@@ -1,6 +1,6 @@
 package fiap.tech.challenge.online.course.feedback.receiver.serverless.loader;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.config.KMSConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,12 +10,12 @@ import java.util.regex.Pattern;
 
 public class ApplicationPropertiesLoader {
 
-    public static Properties loadProperties(ClassLoader classLoaderFilePath) {
+    public static Properties loadProperties(KMSConfig kmsConfig) {
         Properties properties = new Properties();
-        try (InputStream inputStream = classLoaderFilePath.getResourceAsStream("application.properties")) {
+        try (InputStream inputStream = ApplicationPropertiesLoader.class.getClassLoader().getResourceAsStream("application.properties")) {
             properties.load(inputStream);
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao ler arquivo properties de propriedade do sistema: " + e.getMessage());
+            throw new RuntimeException("Erro ao ler arquivo properties da aplicação: " + e.getMessage());
         }
         Pattern pattern = Pattern.compile("\\$\\{(\\w+)}");
         for (String key : properties.stringPropertyNames()) {
@@ -23,8 +23,8 @@ public class ApplicationPropertiesLoader {
             Matcher matcher = pattern.matcher(value);
             StringBuilder sb = new StringBuilder();
             while (matcher.find()) {
-                String envVarName =  matcher.group(1);
-                String envVarValue = System.getenv(envVarName) != null ? System.getenv(envVarName) : Dotenv.load().get(envVarName);
+                String envVarName = matcher.group(1);
+                String envVarValue = EnvUtil.getVar(envVarName, kmsConfig);
                 if (envVarValue != null) {
                     matcher.appendReplacement(sb, Matcher.quoteReplacement(envVarValue));
                 } else {

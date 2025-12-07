@@ -1,6 +1,6 @@
 package fiap.tech.challenge.online.course.feedback.receiver.serverless.config;
 
-import fiap.tech.challenge.online.course.feedback.deliver.serverless.util.EnvUtil;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.util.EnvUtil;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;

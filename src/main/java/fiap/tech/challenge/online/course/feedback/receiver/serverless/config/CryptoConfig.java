@@ -1,6 +1,6 @@
 package fiap.tech.challenge.online.course.feedback.receiver.serverless.config;
 
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.loader.ApplicationPropertiesLoader;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.util.EnvUtil;
 
 import javax.crypto.*;
 import javax.crypto.spec.DESedeKeySpec;
@@ -11,7 +11,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Base64;
-import java.util.Properties;
 
 public class CryptoConfig {
 

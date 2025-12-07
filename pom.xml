@@ -16,6 +16,10 @@
         <dotenv-java.version>3.2.0</dotenv-java.version>
         <aws-lambda-java-core.version>1.2.3</aws-lambda-java-core.version>
         <aws-lambda-java-events.version>3.11.3</aws-lambda-java-events.version>
+        <aws-sdk-core.version>2.39.2</aws-sdk-core.version>
+        <aws-sdk-kms.version>2.39.2</aws-sdk-kms.version>
+        <aws-sdk-apache.version>2.39.2</aws-sdk-apache.version>
+        <aws-sdk-url-connection.version>2.39.2</aws-sdk-url-connection.version>
         <junit.version>5.10.0</junit.version>
         <postgresql.version>42.7.7</postgresql.version>
         <mockito.version>5.7.0</mockito.version>
@@ -34,6 +38,37 @@
             <version>${aws-lambda-java-events.version}</version>
         </dependency>
         <!-- AWS LAMBDA -->
+
+        <!-- AWS SDK CORE -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>core</artifactId>
+            <version>${aws-sdk-core.version}</version>
+            <type>pom</type>
+        </dependency>
+        <!-- AWS SDK CORE -->
+
+        <!-- AWS SDK KMS -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>kms</artifactId>
+            <version>${aws-sdk-kms.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache-client</artifactId>
+            <version>${aws-sdk-apache.version}</version>
+        </dependency>
+        <!-- AWS SDK KMS -->
+
+        <!-- AWS SDK URL CONNECTION -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+            <version>${aws-sdk-url-connection.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- AWS SDK URL CONNECTION -->
 
         <!-- JACKSON -->
         <dependency>

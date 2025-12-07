@@ -5,30 +5,43 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.amazonaws.services.lambda.runtime.logging.LogLevel;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.config.KMSConfig;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.dao.FTCOnlineCourseFeedbackReceiverServerlessDAO;
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.FeedbackRequest;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.loader.ApplicationPropertiesLoader;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.HttpObjectMapper;
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.error.ErrorResponse;
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.error.InvalidParameterErrorResponse;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.record.FeedbackRequest;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.record.error.ErrorResponse;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.record.error.InvalidParameterErrorResponse;
 
 import java.security.InvalidParameterException;
+import java.util.Arrays;
+import java.util.Properties;
 
 public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
+    private static final KMSConfig kmsConfig;
+    private static final Properties applicationProperties;
     private static final FTCOnlineCourseFeedbackReceiverServerlessDAO ftcOnlineCourseFeedbackReceiverServerlessDAO;
 
     static {
-        ftcOnlineCourseFeedbackReceiverServerlessDAO = new FTCOnlineCourseFeedbackReceiverServerlessDAO();
+        try {
+            kmsConfig = new KMSConfig();
+            applicationProperties = ApplicationPropertiesLoader.loadProperties(kmsConfig);
+            ftcOnlineCourseFeedbackReceiverServerlessDAO = new FTCOnlineCourseFeedbackReceiverServerlessDAO(applicationProperties);
+        } catch (Exception ex) {
+            System.err.println("Message: " + ex.getMessage() + " - Cause: " + ex.getCause() + " - Stacktrace: " + Arrays.toString(ex.getStackTrace()));
+            throw new ExceptionInInitializerError(ex);
+        }
     }
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
-        FeedbackRequest feedbackRequest = HttpObjectMapper.readValue(request.getBody(), FeedbackRequest.class);
-        if (feedbackRequest == null) {
-            context.getLogger().log("Erro de conversão de payload de requisição.", LogLevel.ERROR);
-            return buildInvalidParameterErrorResponse(new RuntimeException("O payload para cadastro de feedback não foi informado corretamente."));
-        }
         try {
+            FeedbackRequest feedbackRequest = HttpObjectMapper.readValue(request.getBody(), FeedbackRequest.class);
+            if (feedbackRequest == null) {
+                context.getLogger().log("Erro de conversão de payload de requisição.", LogLevel.ERROR);
+                return buildInvalidParameterErrorResponse(new InvalidParameterException("O payload para cadastro de feedback não foi informado corretamente."));
+            }
             context.getLogger().log("Requisição recebida em FTC Online Course Feedback Receiver - UserType: " + feedbackRequest.userType() + " - E-mail: " + feedbackRequest.email(), LogLevel.INFO);
             validateAPIGatewayProxyRequestEvent(feedbackRequest);
             Long teacherId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getTeacherIdByEmailAndAccessKey(feedbackRequest);
@@ -36,11 +49,11 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
             ftcOnlineCourseFeedbackReceiverServerlessDAO.registerFeedback(teacherStudentId, feedbackRequest);
             return new APIGatewayProxyResponseEvent().withStatusCode(201).withIsBase64Encoded(false);
         } catch (InvalidParameterException e) {
-            context.getLogger().log(e.getMessage(), LogLevel.ERROR);
+            context.getLogger().log("Message: " + e.getMessage() + " - Cause: " + e.getCause() + " - Stacktrace: " + Arrays.toString(e.getStackTrace()), LogLevel.ERROR);
             return buildInvalidParameterErrorResponse(e);
         } catch (Exception e) {
-            context.getLogger().log(e.getMessage(), LogLevel.ERROR);
-            return buildErrorResponse(feedbackRequest, e);
+            context.getLogger().log("Message: " + e.getMessage() + " - Cause: " + e.getCause() + " - Stacktrace: " + Arrays.toString(e.getStackTrace()), LogLevel.ERROR);
+            return buildErrorResponse(e);
         }
     }
 
@@ -54,11 +67,11 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
         }
     }
 
-    private APIGatewayProxyResponseEvent buildInvalidParameterErrorResponse(Exception e) {
-        return new APIGatewayProxyResponseEvent().withStatusCode(400).withBody(HttpObjectMapper.writeValueAsString(new InvalidParameterErrorResponse(e.getMessage()))).withIsBase64Encoded(false);
+    private APIGatewayProxyResponseEvent buildInvalidParameterErrorResponse(InvalidParameterException e) {
+        return new APIGatewayProxyResponseEvent().withStatusCode(400).withBody(HttpObjectMapper.writeValueAsString(new InvalidParameterErrorResponse(e.getMessage(), e.getCause() != null ? e.getCause().toString() : null))).withIsBase64Encoded(false);
     }
 
-    private APIGatewayProxyResponseEvent buildErrorResponse(FeedbackRequest feedbackRequest, Exception e) {
-        return new APIGatewayProxyResponseEvent().withStatusCode(500).withBody(HttpObjectMapper.writeValueAsString(new ErrorResponse(feedbackRequest.userType(), feedbackRequest.email(), e.getMessage()))).withIsBase64Encoded(false);
+    private APIGatewayProxyResponseEvent buildErrorResponse(Exception e) {
+        return new APIGatewayProxyResponseEvent().withStatusCode(500).withBody(HttpObjectMapper.writeValueAsString(new ErrorResponse(e.getMessage(), e.getCause() != null ? e.getCause().toString() : null))).withIsBase64Encoded(false);
     }
 }

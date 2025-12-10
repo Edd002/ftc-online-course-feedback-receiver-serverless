@@ -29,11 +29,13 @@ public class FTCOnlineCourseReportService {
     public void sendEmailUrgentFeedback(String hashIdFeedback) {
         try {
             URI uri = URI.create(ftcOnlineCourseReportProperties.getUrl());
-            ContentStreamProvider payloadContentStreamProvider = ContentStreamProvider.fromUtf8String(Objects.requireNonNull(HttpObjectMapper.writeValueAsString(new FeedbackReportRequest(hashIdFeedback))));
+            String payloadString = HttpObjectMapper.writeValueAsString(new FeedbackReportRequest(hashIdFeedback));
+            ContentStreamProvider payloadContentStreamProvider = ContentStreamProvider.fromUtf8String(Objects.requireNonNull(payloadString));
             SdkHttpRequest sdkHttpRequest = SdkHttpRequest.builder()
                     .uri(uri)
                     .method(SdkHttpMethod.POST)
                     .putHeader("Host", uri.getHost())
+                    .putHeader("Content-Length", String.valueOf(payloadString.getBytes(StandardCharsets.UTF_8).length))
                     .putHeader("Content-Type", "application/json")
                     .build();
 

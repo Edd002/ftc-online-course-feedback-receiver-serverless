@@ -59,16 +59,29 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
         }
     }
 
-    public void registerFeedback(Long teacherStudentId, FeedbackRequest feedbackRequest) {
+    public String getFeedbackHashIdById(Long feedbackId) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT f.hash_id FROM t_feedback f WHERE f.id = ?;");
+            preparedStatement.setLong(1, feedbackId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                throw new NoSuchElementException("Nenhum feedback foi encontrado com o id informado.");
+            }
+            return resultSet.getString("hash_id");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Long registerFeedback(Long teacherStudentId, FeedbackRequest feedbackRequest) {
         try {
             PreparedStatement preparedStatement = preparedStatement(connection, teacherStudentId, feedbackRequest);
             int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected < 1) {
+            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            if (rowsAffected < 1 || !resultSet.next()) {
                 throw new SQLException("Ocorreu um problema ao cadastrar o feedback. Tente novamente mais tarde.");
             }
-            if (feedbackRequest.feedbackUrgent()) {
-                // CALL ftc-online-course-report-serverless TO SEND E-MAIL TO ADMINISTRATOR
-            }
+            return resultSet.getLong(1);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -83,7 +96,7 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
                         ")" +
                         "INSERT INTO t_feedback(id, created_by, urgent, description, comment, fk_assessment) " +
                         "SELECT nextval('sq_feedback'), ?, ?, ?, ?, assessment_id " +
-                        "FROM new_assessment;");
+                        "FROM new_assessment;", Statement.RETURN_GENERATED_KEYS);
         return setPreparedStatementParameters(teacherStudentId, feedbackRequest, preparedStatement);
     }
 

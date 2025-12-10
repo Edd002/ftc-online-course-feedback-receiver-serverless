@@ -48,7 +48,7 @@ public class FTCOnlineCourseReportService {
                     .putProperty(AwsV4HttpSigner.REGION_NAME, Region.US_EAST_2.id()));
             String authorizationHeader = signedRequest.request().firstMatchingHeader("Authorization").orElse(null);
 
-            
+
             SdkHttpResponse sdkHttpResponse;
 
         } catch (Exception ex) {

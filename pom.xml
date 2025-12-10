@@ -21,6 +21,7 @@
         <aws-sdk-apache.version>2.39.2</aws-sdk-apache.version>
         <aws-sdk-url-connection.version>2.39.2</aws-sdk-url-connection.version>
         <aws-sdk-signer.version>1.12.794</aws-sdk-signer.version>
+        <aws-sdk-crt.version>2.40.4</aws-sdk-crt.version>>
         <junit.version>5.10.0</junit.version>
         <postgresql.version>42.7.7</postgresql.version>
         <mockito.version>5.7.0</mockito.version>
@@ -78,6 +79,14 @@
             <version>${aws-sdk-signer.version}</version>
         </dependency>
         <!-- AWS SDK SIGNER -->
+
+        <!-- AWS SDK CRT -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>aws-crt-client</artifactId>
+            <version>${aws-sdk-crt.version}</version>
+        </dependency>
+        <!-- AWS SDK CRT -->
 
         <!-- JACKSON -->
         <dependency>

@@ -4,17 +4,14 @@ import fiap.tech.challenge.online.course.feedback.receiver.serverless.email.payl
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.HttpObjectMapper;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.properties.FTCOnlineCourseReportProperties;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.http.ContentStreamProvider;
-import software.amazon.awssdk.http.SdkHttpFullRequest;
-import software.amazon.awssdk.http.SdkHttpMethod;
-import software.amazon.awssdk.http.SdkHttpResponse;
+import software.amazon.awssdk.http.*;
 import software.amazon.awssdk.http.auth.aws.signer.AwsV4HttpSigner;
 import software.amazon.awssdk.http.auth.spi.signer.SignedRequest;
+import software.amazon.awssdk.http.crt.AwsCrtHttpClient;
 import software.amazon.awssdk.identity.spi.AwsCredentialsIdentity;
 import software.amazon.awssdk.regions.Region;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Properties;
@@ -28,29 +25,31 @@ public class FTCOnlineCourseReportService {
     }
 
     public void sendEmailUrgentFeedback(String hashIdFeedback) {
-        try (HttpClient client = HttpClient.newHttpClient()) {
+        try {
             String requestBody = HttpObjectMapper.writeValueAsString(new FeedbackReportRequest(hashIdFeedback));
-            SdkHttpFullRequest httpRequest = SdkHttpFullRequest.builder()
+            SdkHttpRequest sdkHttpRequest = SdkHttpRequest.builder()
                     .uri(URI.create(ftcOnlineCourseReportProperties.getUrl()))
                     .method(SdkHttpMethod.POST)
                     .putHeader("Content-Type", "application/json")
                     .putHeader("Content-Length", String.valueOf(Objects.requireNonNull(requestBody).getBytes(StandardCharsets.UTF_8).length))
-                    .contentStreamProvider(ContentStreamProvider.fromUtf8String(Objects.requireNonNull(requestBody)))
                     .build();
 
             AwsCredentialsIdentity credentials = AwsCredentialsIdentity.builder().accessKeyId(ftcOnlineCourseReportProperties.getApiKeyId()).secretAccessKey(ftcOnlineCourseReportProperties.getApiKeySecret()).build();
-            RequestBody requestPayload = RequestBody.empty();
             SignedRequest signedRequest = AwsV4HttpSigner.create().sign(awsCredentials -> awsCredentials
                     .identity(credentials)
-                    .request(httpRequest)
-                    .payload(requestPayload.contentStreamProvider())
+                    .request(sdkHttpRequest)
+                    .payload(RequestBody.empty().contentStreamProvider())
                     .putProperty(AwsV4HttpSigner.SERVICE_SIGNING_NAME, "lambda")
                     .putProperty(AwsV4HttpSigner.REGION_NAME, Region.US_EAST_2.id()));
             String authorizationHeader = signedRequest.request().firstMatchingHeader("Authorization").orElse(null);
 
-
-            SdkHttpResponse sdkHttpResponse;
-
+            try (SdkHttpClient httpClient = AwsCrtHttpClient.builder().build()) {
+                HttpExecuteRequest request = HttpExecuteRequest.builder()
+                        .contentStreamProvider(ContentStreamProvider.fromUtf8String(Objects.requireNonNull(requestBody)))
+                        .request(sdkHttpRequest.toBuilder().putHeader("Authorization", authorizationHeader).build()).build();
+                HttpExecuteResponse response = httpClient.prepareRequest(request).call();
+                System.out.println("Response: " + response.toString());
+            }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

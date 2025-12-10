@@ -20,6 +20,7 @@
         <aws-sdk-kms.version>2.39.2</aws-sdk-kms.version>
         <aws-sdk-apache.version>2.39.2</aws-sdk-apache.version>
         <aws-sdk-url-connection.version>2.39.2</aws-sdk-url-connection.version>
+        <aws-sdk-signer.version>1.12.794</aws-sdk-signer.version>
         <junit.version>5.10.0</junit.version>
         <postgresql.version>42.7.7</postgresql.version>
         <mockito.version>5.7.0</mockito.version>
@@ -69,6 +70,14 @@
             <scope>compile</scope>
         </dependency>
         <!-- AWS SDK URL CONNECTION -->
+
+        <!-- AWS SDK SIGNER -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-signer</artifactId>
+            <version>${aws-sdk-signer.version}</version>
+        </dependency>
+        <!-- AWS SDK SIGNER -->
 
         <!-- JACKSON -->
         <dependency>

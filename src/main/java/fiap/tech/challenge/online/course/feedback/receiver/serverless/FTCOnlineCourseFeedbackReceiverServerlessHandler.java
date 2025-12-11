@@ -50,8 +50,8 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
             Long teacherId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getTeacherIdByEmailAndAccessKey(feedbackRequest);
             Long teacherStudentId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getTeacherStudentIdByTeacherIdAndStudentEmail(teacherId, feedbackRequest);
             Long feedbackId = ftcOnlineCourseFeedbackReceiverServerlessDAO.registerFeedback(teacherStudentId, feedbackRequest);
-            String feedbackHashId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getFeedbackHashIdById(feedbackId);
-            ftcOnlineCourseReportService.sendEmailUrgentFeedback(feedbackHashId);
+            String urgentFeedbackHashId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getUrgentFeedbackHashIdByIdIfExists(feedbackId);
+            ftcOnlineCourseReportService.sendEmailUrgentFeedback(urgentFeedbackHashId);
             return new APIGatewayProxyResponseEvent().withStatusCode(201).withIsBase64Encoded(false);
         } catch (InvalidParameterException e) {
             context.getLogger().log("Message: " + e.getMessage() + " - Cause: " + e.getCause() + " - Stacktrace: " + Arrays.toString(e.getStackTrace()), LogLevel.ERROR);

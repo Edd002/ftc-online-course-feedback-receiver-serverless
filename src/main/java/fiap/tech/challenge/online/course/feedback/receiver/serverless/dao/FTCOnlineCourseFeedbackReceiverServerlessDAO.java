@@ -59,20 +59,6 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
         }
     }
 
-    public String getFeedbackHashIdById(Long feedbackId) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement("SELECT f.hash_id FROM t_feedback f WHERE f.id = ?;");
-            preparedStatement.setLong(1, feedbackId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next()) {
-                throw new NoSuchElementException("Nenhum feedback foi encontrado com o id informado.");
-            }
-            return resultSet.getString("hash_id");
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public Long registerFeedback(Long teacherStudentId, FeedbackRequest feedbackRequest) {
         try {
             PreparedStatement preparedStatement = preparedStatement(connection, teacherStudentId, feedbackRequest);
@@ -111,5 +97,19 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
         preparedStatement.setString(8, feedbackRequest.feedbackDescription());
         preparedStatement.setString(9, feedbackRequest.feedbackComment());
         return preparedStatement;
+    }
+
+    public String getUrgentFeedbackHashIdByIdIfExists(Long feedbackId) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT f.hash_id FROM t_feedback f WHERE f.id = ? AND f.urgent = TRUE;");
+            preparedStatement.setLong(1, feedbackId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            return resultSet.getString("hash_id");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

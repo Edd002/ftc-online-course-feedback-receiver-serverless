@@ -10,13 +10,11 @@ import software.amazon.awssdk.http.crt.AwsCrtHttpClient;
 import software.amazon.awssdk.identity.spi.AwsCredentialsIdentity;
 import software.amazon.awssdk.regions.Region;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 public class FTCOnlineCourseReportService {
 
@@ -28,58 +26,41 @@ public class FTCOnlineCourseReportService {
 
     public void sendEmailUrgentFeedback(String hashIdFeedback) {
         try {
-            URI uri = URI.create(ftcOnlineCourseReportProperties.getUrl());
-            String payloadString = HttpObjectMapper.writeValueAsString(new FeedbackReportRequest(hashIdFeedback));
-            ContentStreamProvider payloadContentStreamProvider = ContentStreamProvider.fromUtf8String(Objects.requireNonNull(payloadString));
-            SdkHttpRequest sdkHttpRequest = SdkHttpRequest.builder()
-                    .uri(uri)
-                    .method(SdkHttpMethod.POST)
-                    .putHeader("Host", uri.getHost())
-                    .putHeader("Content-Length", String.valueOf(payloadString.getBytes(StandardCharsets.UTF_8).length))
-                    .putHeader("Content-Type", "application/json")
-                    .build();
-
-            AwsCredentialsIdentity credentials = AwsCredentialsIdentity.builder().accessKeyId(ftcOnlineCourseReportProperties.getApiKeyId()).secretAccessKey(ftcOnlineCourseReportProperties.getApiKeySecret()).build();
-            SdkHttpFullRequest signedRequest = (SdkHttpFullRequest) AwsV4HttpSigner.create().sign(r -> r
-                    .identity(credentials)
-                    .request(sdkHttpRequest)
-                    .payload(RequestBody.empty().contentStreamProvider())
-                    .putProperty(AwsV4HttpSigner.SERVICE_SIGNING_NAME, "lambda")
-                    .putProperty(AwsV4HttpSigner.REGION_NAME, Region.US_EAST_2.id())
-                    .payload(payloadContentStreamProvider))
-                    .request();
-
-            try (SdkHttpClient httpClient = AwsCrtHttpClient.builder().build()) {
-                HttpExecuteRequest request = HttpExecuteRequest.builder()
-                        .request(signedRequest)
-                        .contentStreamProvider(payloadContentStreamProvider)
+            if (hashIdFeedback != null) {
+                URI uri = URI.create(ftcOnlineCourseReportProperties.getUrl());
+                String payloadString = HttpObjectMapper.writeValueAsString(new FeedbackReportRequest(hashIdFeedback));
+                ContentStreamProvider payloadContentStreamProvider = ContentStreamProvider.fromUtf8String(Objects.requireNonNull(payloadString));
+                SdkHttpRequest sdkHttpRequest = SdkHttpRequest.builder()
+                        .uri(uri)
+                        .method(SdkHttpMethod.POST)
+                        .putHeader("Host", uri.getHost())
+                        .putHeader("Content-Length", String.valueOf(payloadString.getBytes(StandardCharsets.UTF_8).length))
+                        .putHeader("Content-Type", "application/json")
                         .build();
-                HttpExecuteResponse response = httpClient.prepareRequest(request).call();
-                System.out.println("Response status code: " + response.httpResponse().statusCode());
-                System.out.println("Curl: " + getCurlCommand(request.httpRequest(), request.contentStreamProvider().orElse(null)));
+
+                AwsCredentialsIdentity credentials = AwsCredentialsIdentity.builder().accessKeyId(ftcOnlineCourseReportProperties.getApiKeyId()).secretAccessKey(ftcOnlineCourseReportProperties.getApiKeySecret()).build();
+                SdkHttpFullRequest signedRequest = (SdkHttpFullRequest) AwsV4HttpSigner.create().sign(r -> r
+                                .identity(credentials)
+                                .request(sdkHttpRequest)
+                                .payload(RequestBody.empty().contentStreamProvider())
+                                .putProperty(AwsV4HttpSigner.SERVICE_SIGNING_NAME, "lambda")
+                                .putProperty(AwsV4HttpSigner.REGION_NAME, Region.US_EAST_2.id())
+                                .payload(payloadContentStreamProvider))
+                        .request();
+
+                try (SdkHttpClient httpClient = AwsCrtHttpClient.builder().build()) {
+                    HttpExecuteRequest request = HttpExecuteRequest.builder()
+                            .request(signedRequest)
+                            .contentStreamProvider(payloadContentStreamProvider)
+                            .build();
+                    HttpExecuteResponse response = httpClient.prepareRequest(request).call();
+                    if (!response.httpResponse().isSuccessful()) {
+                        throw new IOException("Unexpected code " + response);
+                    }
+                }
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
-
-    public String getCurlCommand(SdkHttpRequest request, ContentStreamProvider bodyProvider) {
-        StringBuilder curl = new StringBuilder("curl -X ").append(request.method().name()).append(" '").append(request.getUri().toString()).append("'");
-        request.headers().forEach((key, values) -> {
-            for (String value : values) {
-                curl.append(" -H '").append(key).append(": ").append(value).append("'");
-            }
-        });
-        if (bodyProvider != null) {
-            try {
-                String body = new BufferedReader(new InputStreamReader(bodyProvider.newStream(), StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
-                body = body.replace("'", "'\\''");
-                curl.append(" -d '").append(body).append("'");
-            } catch (Exception e) {
-                System.err.println("Could not read request body for curl command: " + e.getMessage());
-            }
-        }
-        return curl.toString();
-    }
 }
-

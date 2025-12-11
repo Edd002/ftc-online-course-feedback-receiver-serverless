@@ -1,8 +1,8 @@
-package fiap.tech.challenge.online.course.feedback.receiver.serverless.config;
+package fiap.tech.challenge.online.course.feedback.receiver.serverless.properties;
 
 import java.util.Properties;
 
-public class DataSourceConfig {
+public class DataSourceProperties {
 
     private final String host;
     private final int port;
@@ -10,7 +10,7 @@ public class DataSourceConfig {
     private final String username;
     private final String password;
 
-    public DataSourceConfig(Properties applicationProperties) {
+    public DataSourceProperties(Properties applicationProperties) {
         this.host = applicationProperties.getProperty("application.datasource.hostname");
         this.port = Integer.parseInt(applicationProperties.getProperty("application.datasource.port"));
         this.database = applicationProperties.getProperty("application.datasource.database");

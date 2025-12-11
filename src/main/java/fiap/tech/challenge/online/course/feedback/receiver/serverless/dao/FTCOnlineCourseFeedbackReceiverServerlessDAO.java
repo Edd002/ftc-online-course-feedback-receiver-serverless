@@ -1,7 +1,7 @@
 package fiap.tech.challenge.online.course.feedback.receiver.serverless.dao;
 
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.config.CryptoConfig;
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.config.DataSourceConfig;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.properties.DataSourceProperties;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.record.FeedbackRequest;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.enumeration.UserType;
 
@@ -14,10 +14,10 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
     private final Connection connection;
 
     public FTCOnlineCourseFeedbackReceiverServerlessDAO(Properties applicationProperties) {
-        DataSourceConfig dataSourceConfig = new DataSourceConfig(applicationProperties);
+        DataSourceProperties dataSourceProperties = new DataSourceProperties(applicationProperties);
         try {
             Class.forName("org.postgresql.Driver");
-            connection = DriverManager.getConnection(dataSourceConfig.getJdbcUrl(), dataSourceConfig.getUsername(), dataSourceConfig.getPassword());
+            connection = DriverManager.getConnection(dataSourceProperties.getJdbcUrl(), dataSourceProperties.getUsername(), dataSourceProperties.getPassword());
             if (!connection.isValid(0)) {
                 throw new SQLException("Não foi possível estabelecer uma conexão com o banco de dados. URL de conexão: " + connection.getMetaData().getURL());
             }
@@ -59,16 +59,15 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
         }
     }
 
-    public void registerFeedback(Long teacherStudentId, FeedbackRequest feedbackRequest) {
+    public Long registerFeedback(Long teacherStudentId, FeedbackRequest feedbackRequest) {
         try {
             PreparedStatement preparedStatement = preparedStatement(connection, teacherStudentId, feedbackRequest);
             int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected < 1) {
+            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            if (rowsAffected < 1 || !resultSet.next()) {
                 throw new SQLException("Ocorreu um problema ao cadastrar o feedback. Tente novamente mais tarde.");
             }
-            if (feedbackRequest.feedbackUrgent()) {
-                // CALL ftc-online-course-report-serverless TO SEND E-MAIL TO ADMINISTRATOR
-            }
+            return resultSet.getLong(1);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -83,7 +82,7 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
                         ")" +
                         "INSERT INTO t_feedback(id, created_by, urgent, description, comment, fk_assessment) " +
                         "SELECT nextval('sq_feedback'), ?, ?, ?, ?, assessment_id " +
-                        "FROM new_assessment;");
+                        "FROM new_assessment;", Statement.RETURN_GENERATED_KEYS);
         return setPreparedStatementParameters(teacherStudentId, feedbackRequest, preparedStatement);
     }
 
@@ -98,5 +97,19 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
         preparedStatement.setString(8, feedbackRequest.feedbackDescription());
         preparedStatement.setString(9, feedbackRequest.feedbackComment());
         return preparedStatement;
+    }
+
+    public String getUrgentFeedbackHashIdByIdIfExists(Long feedbackId) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT f.hash_id FROM t_feedback f WHERE f.id = ? AND f.urgent = TRUE;");
+            preparedStatement.setLong(1, feedbackId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            return resultSet.getString("hash_id");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

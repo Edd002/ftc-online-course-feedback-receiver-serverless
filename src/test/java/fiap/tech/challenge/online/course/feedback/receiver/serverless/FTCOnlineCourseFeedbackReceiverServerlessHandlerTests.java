@@ -20,7 +20,7 @@ class FTCOnlineCourseFeedbackReceiverServerlessHandlerTests {
         APIGatewayProxyRequestEvent request = new APIGatewayProxyRequestEvent();
         request.setHttpMethod("POST");
         request.setPath("/");
-        request.setBody(HttpObjectMapper.writeValueAsString(new FeedbackRequest(UserType.TEACHER, "teacher1@email.com", "123", "student1@email.com", "Nome Assessment 4", AssessmentType.TEST, 5.0, false, "Descrição Assessment 4", "Comentário Assessment 4")));
+        request.setBody(HttpObjectMapper.writeValueAsString(new FeedbackRequest(UserType.TEACHER, "teacher1@email.com", "123", "student1@email.com", "Nome Assessment 4", AssessmentType.TEST, 5.0, true, "Descrição Assessment 4", "Comentário Assessment 4")));
         APIGatewayProxyResponseEvent response = handler.handleRequest(request, context);
         assertEquals(201, response.getStatusCode().intValue());
     }

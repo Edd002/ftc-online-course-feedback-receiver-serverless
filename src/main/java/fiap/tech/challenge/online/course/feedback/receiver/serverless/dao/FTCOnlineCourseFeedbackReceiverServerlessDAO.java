@@ -6,6 +6,7 @@ import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.re
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.enumeration.UserType;
 
 import java.sql.*;
+import java.text.DecimalFormat;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
@@ -90,7 +91,7 @@ public class FTCOnlineCourseFeedbackReceiverServerlessDAO {
         preparedStatement.setString(1, feedbackRequest.email());
         preparedStatement.setString(2, feedbackRequest.assessmentName());
         preparedStatement.setString(3, feedbackRequest.assessmentType().name());
-        preparedStatement.setDouble(4, feedbackRequest.assessmentScore());
+        preparedStatement.setDouble(4, Double.parseDouble(new DecimalFormat("#.##").format(feedbackRequest.assessmentScore())));
         preparedStatement.setLong(5, teacherStudentId);
         preparedStatement.setString(6, feedbackRequest.email());
         preparedStatement.setBoolean(7, feedbackRequest.feedbackUrgent());

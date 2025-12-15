@@ -7,7 +7,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.config.KMSConfig;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.dao.FTCOnlineCourseFeedbackReceiverServerlessDAO;
-import fiap.tech.challenge.online.course.feedback.receiver.serverless.email.FTCOnlineCourseReportService;
+import fiap.tech.challenge.online.course.feedback.receiver.serverless.email.FTCOnlineCourseReportQueueService;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.loader.ApplicationPropertiesLoader;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.HttpObjectMapper;
 import fiap.tech.challenge.online.course.feedback.receiver.serverless.payload.record.FeedbackRequest;
@@ -23,14 +23,14 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
     private static final KMSConfig kmsConfig;
     private static final Properties applicationProperties;
     private static final FTCOnlineCourseFeedbackReceiverServerlessDAO ftcOnlineCourseFeedbackReceiverServerlessDAO;
-    private static final FTCOnlineCourseReportService ftcOnlineCourseReportService;
+    private static final FTCOnlineCourseReportQueueService ftcOnlineCourseReportQueueService;
 
     static {
         try {
             kmsConfig = new KMSConfig();
             applicationProperties = ApplicationPropertiesLoader.loadProperties(kmsConfig);
             ftcOnlineCourseFeedbackReceiverServerlessDAO = new FTCOnlineCourseFeedbackReceiverServerlessDAO(applicationProperties);
-            ftcOnlineCourseReportService = new FTCOnlineCourseReportService(applicationProperties);
+            ftcOnlineCourseReportQueueService = new FTCOnlineCourseReportQueueService(applicationProperties);
         } catch (Exception ex) {
             System.err.println("Message: " + ex.getMessage() + " - Cause: " + ex.getCause() + " - Stacktrace: " + Arrays.toString(ex.getStackTrace()));
             throw new ExceptionInInitializerError(ex);
@@ -51,7 +51,7 @@ public class FTCOnlineCourseFeedbackReceiverServerlessHandler implements Request
             Long teacherStudentId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getTeacherStudentIdByTeacherIdAndStudentEmail(teacherId, feedbackRequest);
             Long feedbackId = ftcOnlineCourseFeedbackReceiverServerlessDAO.registerFeedback(teacherStudentId, feedbackRequest);
             String urgentFeedbackHashId = ftcOnlineCourseFeedbackReceiverServerlessDAO.getUrgentFeedbackHashIdByIdIfExists(feedbackId);
-            ftcOnlineCourseReportService.sendEmailUrgentFeedback(urgentFeedbackHashId);
+            ftcOnlineCourseReportQueueService.send(urgentFeedbackHashId);
             return new APIGatewayProxyResponseEvent().withStatusCode(201).withIsBase64Encoded(false);
         } catch (InvalidParameterException e) {
             context.getLogger().log("Message: " + e.getMessage() + " - Cause: " + e.getCause() + " - Stacktrace: " + Arrays.toString(e.getStackTrace()), LogLevel.ERROR);

@@ -24,7 +24,7 @@ public class FTCOnlineCourseReportService {
         ftcOnlineCourseReportProperties = new FTCOnlineCourseReportProperties(applicationProperties);
     }
 
-    public void sendEmailUrgentFeedback(String hashIdFeedback) {
+    public void call(String hashIdFeedback) {
         try {
             if (hashIdFeedback != null) {
                 URI uri = URI.create(ftcOnlineCourseReportProperties.getUrl());
@@ -55,7 +55,7 @@ public class FTCOnlineCourseReportService {
                             .build();
                     HttpExecuteResponse response = httpClient.prepareRequest(request).call();
                     if (!response.httpResponse().isSuccessful()) {
-                        throw new IOException("Unexpected code " + response);
+                        throw new IOException("Erro ao realizar chamada para envio de e-mail de urgência. HTTP Status code: " + response.httpResponse().statusCode());
                     }
                 }
             }

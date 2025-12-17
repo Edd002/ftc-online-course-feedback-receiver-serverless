@@ -25,7 +25,6 @@ Este sistema foi desenvolvido utilizando Java 21 e PostgreSQL 17.4.
 - **AWS SQS** para atuar como produtor
 - **AWS KMS** para criptografia das variáveis de ambiente
 - **Jackson** para conversão de estrutura de dados (serializar e desserializar)
-- **Javax Mail** para envio de e-mail
 
 ### Benefícios da Arquitetura
 Essa estrutura simplificada possibilita:
